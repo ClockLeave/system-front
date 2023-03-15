@@ -42,6 +42,19 @@ export default {
       method: 'delete',
       data: idlist
     })
+  },
+  toAssign(id) {
+    return request({
+      url: `${api_name}/toAssign/${id}`,
+      method: 'get'
+    })
+  },
+  doAssign(assginRoleVo) {
+    return request({
+      url: `${api_name}/doAssign`,
+      method: 'post',
+      data: assginRoleVo
+    })
   }
 
 }

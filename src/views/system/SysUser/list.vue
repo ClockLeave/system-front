@@ -54,6 +54,8 @@
                     <el-button type="primary" icon="el-icon-edit" size="mini" @click="edit(scope.row.id)" title="修改" />
                     <el-button type="danger" icon="el-icon-delete" size="mini" @click="removeDataById(scope.row.id)"
                         title="删除" />
+                    <el-button type="warning" icon="el-icon-baseball" size="mini" @click="showAssignRole(scope.row)"
+                        title="分配角色" />
                 </template>
             </el-table-column>
         </el-table>
@@ -82,11 +84,33 @@
                 <el-button type="primary" icon="el-icon-check" @click="updateOrSave()" size="small">确 定</el-button>
             </span>
         </el-dialog>
+        <el-dialog title="分配角色" :visible.sync="dialogRoleVisible">
+            <el-form label-width="80px">
+                <el-form-item label="用户名">
+                    <el-input disabled :value="sysUser.username"></el-input>
+                </el-form-item>
+
+                <el-form-item label="角色列表">
+                    <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll"
+                        @change="handleCheckAllChange">全选</el-checkbox>
+                    <div style="margin: 15px 0;"></div>
+                    <el-checkbox-group v-model="userRoleIds" @change="handleCheckedChange">
+                        <el-checkbox v-for="role in allRoles" :key="role.id" :label="role.id">{{ role.roleName
+                        }}</el-checkbox>
+                    </el-checkbox-group>
+                </el-form-item>
+            </el-form>
+            <div slot="footer">
+                <el-button type="primary" @click="assignRole" size="small">保存</el-button>
+                <el-button @click="dialogRoleVisible = false" size="small">取消</el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
 <script>
 import api from '@/api/system/user'
+import roleApi from '@/api/system/role'
 // const defaultForm = {
 //   id: '',
 //   username: '',
@@ -110,12 +134,42 @@ export default {
             dialogVisible: false,
             sysUser: {},
             saveBtnDisabled: false,
+
+            dialogRoleVisible: false,
+            allRoles: [], // 所有角色列表
+            userRoleIds: [], // 用户的角色ID的列表
+            isIndeterminate: false, // 是否是不确定的
+            checkAll: false // 是否全选
         }
     },
     created() {
         this.fetchData()
     },
     methods: {
+        assignRole() {
+            let assginRoleVo = {
+                userId: this.sysUser.id,
+                roleIdList: this.userRoleIds
+            }
+            roleApi.doAssign(assginRoleVo).then(() => {
+                this.$message.success('修改角色权限成功')
+                this.dialogRoleVisible = false
+                this.fetchData()
+            }
+
+
+            )
+        },
+        showAssignRole(row) {
+           
+            roleApi.toAssign(row.id).then(response => {
+                this.sysUser.id = row.id
+                this.allRoles = response.data.allRoles
+                this.userRoleIds = response.data.userRoleIds
+                this.dialogRoleVisible = true
+            })
+
+        },
         fetchData(page = 1) {
             this.page = page
             if (this.createTimes != null & this.createTimes.length == 2) {
